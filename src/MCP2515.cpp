@@ -55,6 +55,16 @@
 #define FLAG_RXM0                  0x20
 #define FLAG_RXM1                  0x40
 
+static const MCP2515Class::INTVector MCP2515Class::_vectors[6] = {
+  MCP2515Class::onInterruptINT0,
+  MCP2515Class::onInterruptINT1,
+  MCP2515Class::onInterruptINT2,
+  MCP2515Class::onInterruptINT3,
+  MCP2515Class::onInterruptINT4,
+  MCP2515Class::onInterruptINT5
+};
+
+static MCP2515Class::INTHandler MCP2515Class::_instances[6];
 
 MCP2515Class::MCP2515Class() :
   CANControllerClass(),
@@ -266,13 +276,20 @@ void MCP2515Class::onReceive(void(*callback)(int))
 
   pinMode(_intPin, INPUT);
 
+  int8_t inum = digitalPinToInterrupt(_intPin);
+  
   if (callback) {
-    SPI.usingInterrupt(digitalPinToInterrupt(_intPin));
-    attachInterrupt(digitalPinToInterrupt(_intPin), MCP2515Class::onInterrupt, LOW);
+    SPI.usingInterrupt(inum);
+    if (inum >= 0 && inum < sizeof(_vectors)) {
+      _instances[inum] = this;
+      attachInterrupt(inum, _vectors[inum], LOW);
+    } else {
+      attachInterrupt(inum, MCP2515Class::onInterrupt, LOW);
+    }
   } else {
-    detachInterrupt(digitalPinToInterrupt(_intPin));
+    detachInterrupt(inum);
 #ifdef SPI_HAS_NOTUSINGINTERRUPT
-    SPI.notUsingInterrupt(digitalPinToInterrupt(_intPin));
+    SPI.notUsingInterrupt(inum);
 #endif
   }
 }
@@ -445,7 +462,7 @@ void MCP2515Class::handleInterrupt()
   }
 
   while (parsePacket() || _rxId != -1) {
-    _onReceive(available());
+    if (_onReceive) _onReceive(available());
   }
 }
 
@@ -490,6 +507,42 @@ void MCP2515Class::writeRegister(uint8_t address, uint8_t value)
 void MCP2515Class::onInterrupt()
 {
   CAN.handleInterrupt();
+}
+
+void MCP2515Class::onInterrupt(uint8_t irq)
+{
+  INTHandler instance = _instances[irq];
+  if (instance) instance->handleInterrupt();
+}
+
+void MCP2515Class::onInterruptINT0()
+{
+  onInterrupt(0);
+}
+
+void MCP2515Class::onInterruptINT1()
+{
+  onInterrupt(1);
+}
+
+void MCP2515Class::onInterruptINT2()
+{
+  onInterrupt(2);
+}
+
+void MCP2515Class::onInterruptINT3()
+{
+  onInterrupt(3);
+}
+
+void MCP2515Class::onInterruptINT4()
+{
+  onInterrupt(4);
+}
+
+void MCP2515Class::onInterruptINT5()
+{
+  onInterrupt(5);
 }
 
 MCP2515Class CAN;

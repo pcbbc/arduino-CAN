@@ -62,12 +62,25 @@ private:
   void writeRegister(uint8_t address, uint8_t value);
 
   static void onInterrupt();
+  static void onInterrupt(uint8_t irq);
+  static void onInterruptINT0();
+  static void onInterruptINT1();
+  static void onInterruptINT2();
+  static void onInterruptINT3();
+  static void onInterruptINT4();
+  static void onInterruptINT5();
 
 private:
   SPISettings _spiSettings;
   int _csPin;
   int _intPin;
   long _clockFrequency;
+
+  typedef void (*INTVector)(void);
+  typedef MCP2515Class* INTHandler;
+
+  static const INTVector _vectors[6];
+  static INTHandler _instances[6];
 };
 
 extern MCP2515Class CAN;
