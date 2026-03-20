@@ -56,12 +56,12 @@
 #define FLAG_RXM1                  0x40
 
 static const MCP2515Class::INTVector MCP2515Class::_vectors[6] = {
-  MCP2515Class::onInterruptINT0,
-  MCP2515Class::onInterruptINT1,
-  MCP2515Class::onInterruptINT2,
-  MCP2515Class::onInterruptINT3,
-  MCP2515Class::onInterruptINT4,
-  MCP2515Class::onInterruptINT5
+  MCP2515Class::onInterrupt0,
+  MCP2515Class::onInterrupt1,
+  MCP2515Class::onInterrupt2,
+  MCP2515Class::onInterrupt3,
+  MCP2515Class::onInterrupt4,
+  MCP2515Class::onInterrupt5
 };
 
 static MCP2515Class::INTHandler MCP2515Class::_instances[6];
@@ -280,7 +280,7 @@ void MCP2515Class::onReceive(void(*callback)(int))
   
   if (callback) {
     SPI.usingInterrupt(inum);
-    if (inum >= 0 && inum < sizeof(_vectors)) {
+    if (inum >= 0 && inum < (sizeof(_vectors) / sizeof(_vectors[0]))) {
       _instances[inum] = this;
       attachInterrupt(inum, _vectors[inum], LOW);
     } else {
@@ -509,40 +509,34 @@ void MCP2515Class::onInterrupt()
   CAN.handleInterrupt();
 }
 
-void MCP2515Class::onInterrupt(uint8_t irq)
+void MCP2515Class::onInterrupt0()
 {
-  INTHandler instance = _instances[irq];
-  if (instance) instance->handleInterrupt();
+  _instances[0]->handleInterrupt();
 }
 
-void MCP2515Class::onInterruptINT0()
+void MCP2515Class::onInterrupt1()
 {
-  onInterrupt(0);
+  _instances[1]->handleInterrupt();
 }
 
-void MCP2515Class::onInterruptINT1()
+void MCP2515Class::onInterrupt2()
 {
-  onInterrupt(1);
+  _instances[2]->handleInterrupt();
 }
 
-void MCP2515Class::onInterruptINT2()
+void MCP2515Class::onInterrupt3()
 {
-  onInterrupt(2);
+  _instances[3]->handleInterrupt();
 }
 
-void MCP2515Class::onInterruptINT3()
+void MCP2515Class::onInterrupt4()
 {
-  onInterrupt(3);
+  _instances[4]->handleInterrupt();
 }
 
-void MCP2515Class::onInterruptINT4()
+void MCP2515Class::onInterrupt5()
 {
-  onInterrupt(4);
-}
-
-void MCP2515Class::onInterruptINT5()
-{
-  onInterrupt(5);
+  _instances[5]->handleInterrupt();
 }
 
 MCP2515Class CAN;
